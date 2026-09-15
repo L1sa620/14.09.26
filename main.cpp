@@ -7,6 +7,7 @@
 #include <future>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 
 using data_t = std::vector<unsigned long long>;
 using value_t = data_t::value_type;
@@ -87,13 +88,28 @@ int main(int argc, char *argv[])
     constexpr std::size_t size = 1'000'000'000;
     const data_t values(size, 1);
 
-    const Clicker timer;
-    const value_t sum = parallelSum(values, threads);
-    const double elapsed = timer.millisec();
+        std::vector<double> times(5);
+    value_t sum = 0;
+
+    for (std::size_t i = 0; i < times.size(); ++i)
+    {
+      const Clicker timer;
+      sum = parallelSum(values, threads);
+      times[i] = timer.millisec();
+
+      if (sum != static_cast<value_t>(size))
+      {
+        throw std::logic_error("Incorrect sum");
+      }
+
+      std::cout << "Run " << i + 1 << ": " << times[i] << " ms\n";
+    }
+
+    std::sort(times.begin(), times.end());
 
     std::cout << "Threads: " << threads << "\n";
     std::cout << "Sum: " << sum << "\n";
-    std::cout << "Time: " << elapsed << " ms\n";
+    std::cout << "Median: " << times[2] << " ms\n";
   }
   catch (const std::exception &error)
   {
